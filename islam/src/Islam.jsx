@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"; 
-import { getSurahs, getAyahs } from "./api/quran";
+import { getSurahs, getAyahs, getBooks, getHadiths } from "./api/quran";
+
 // ─── API CONFIG ───────────────────────────────────────────────
 const API_BASE = "127.0.0.1:8000/api";
 const apiFetch = (path) => fetch(`${API_BASE}${path}`).then(r => r.json());
@@ -383,6 +384,7 @@ function QuranPage() {
 </div>  );
 } 
 
+
 function HadithPage({ theme }) {
   const [books, setBooks] = useState([]);
   const [hadiths, setHadiths] = useState([]);
@@ -397,39 +399,42 @@ function HadithPage({ theme }) {
 
   const [loading, setLoading] = useState(false);
 
-// ✅ Fetch Books
-useEffect(() => {
-  getBooks()
-    .then(data => setBooks(data))
-    .catch(err => console.error(err));
-}, []);
+  // ✅ Fetch Books
+  useEffect(() => {
+    getBooks()
+      .then(data => setBooks(data))
+      .catch(err => console.error(err));
+  }, []);
 
-// ✅ Fetch Hadiths
-const fetchHadiths = (bookId, pageNum = 1) => {
-  setLoading(true);
-  setPage(pageNum);
+  // ✅ Fetch Hadiths
+  const fetchHadiths = (bookId, pageNum = 1) => {
+    setLoading(true);
+    setPage(pageNum);
+    setHadiths([]); // ✅ prevent crash
 
-  getHadiths(bookId, pageNum, search, status)
-    .then(data => {
-      console.log("HADITH RESPONSE:", data);
+    getHadiths(bookId, pageNum, search, status)
+      .then(data => {
+        console.log("HADITH RESPONSE:", data);
 
-      setHadiths(data.results || []);
-      setNextPage(data.next);
-      setPrevPage(data.previous);
+        const hadithData = data.results ? data.results : data;
 
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error(err);
-      setLoading(false);
-    });
-};
+        setHadiths(hadithData || []);
+        setNextPage(data.next || null);
+        setPrevPage(data.previous || null);
 
-// ✅ When book selected
-const openBook = (id) => {
-  setSelectedBook(id);
-  fetchHadiths(id, 1);
-};
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("HADITH ERROR:", err);
+        setLoading(false);
+      });
+  };
+
+  // ✅ Open Book
+  const openBook = (id) => {
+    setSelectedBook(id);
+    setTimeout(() => fetchHadiths(id, 1), 100);
+  };
 
   return (
     <div style={{ padding: "20px" }}>
@@ -461,10 +466,10 @@ const openBook = (id) => {
       {/* 🔹 HADITH SECTION */}
       {selectedBook && (
         <div style={{ maxWidth: "800px", margin: "auto" }}>
-          
+
           <button onClick={() => setSelectedBook(null)}>⬅ Back</button>
 
-          {/* 🔍 SEARCH + FILTER */}
+          {/* 🔍 FILTER */}
           <div style={{ display: "flex", gap: "10px", margin: "15px 0" }}>
             <input
               type="text"
@@ -492,58 +497,78 @@ const openBook = (id) => {
           ) : (
             <>
               {/* 📜 HADITH LIST */}
-    {hadiths.map(h => (
-  <div key={h.id}
-    style={{ marginBottom: "25px", padding: "15px", borderBottom: "1px solid #ddd", background: "#fafafa", borderRadius: "10px"
-    }}>
+              {Array.isArray(hadiths) && hadiths.length > 0 ? (
+                hadiths.map(h => (
+                  <div key={h.id}
+                    style={{
+                      marginBottom: "25px",
+                      padding: "15px",
+                      borderBottom: "1px solid #ddd",
+                      background: "#fafafa",
+                      borderRadius: "10px"
+                    }}>
 
-    {/* 🔥 TOP INFO BAR */}
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "10px", color: "#555"
-    }}>
-      <span>
-        📖 {h.book?.name}
-      </span>
+                    {/* TOP BAR */}
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "13px",
+                      marginBottom: "10px",
+                      color: "#555"
+                    }}>
+                      <span>📖 {h.book?.name || "Unknown Book"}</span>
+                      <span>Hadith #{h.hadith_number}</span>
+                    </div>
 
-      <span>
-        Hadith #{h.hadith_number}
-      </span>
-    </div>
+                    {/* CHAPTER */}
+                    <div style={{
+                      marginBottom: "10px",
+                      fontWeight: "bold",
+                      color: "#555"
+                    }}>
+                      📚 Chapter {h.chapter?.chapter_number || "-"} - {h.chapter?.english || ""}
+                    </div>
 
-    {/* 🔥 CHAPTER INFO */}
-    <div style={{ marginBottom: "10px", fontWeight: "bold", color: "#555"
-    }}>
-      📚 Chapter {h.chapter?.chapter_number} - {h.chapter?.english}
-    </div>
+                    {/* STATUS */}
+                    <div style={{
+                      fontSize: "12px",
+                      marginBottom: "10px",
+                      color: "green"
+                    }}>
+                      {h.status?.toUpperCase() || ""}
+                    </div>
 
-    {/* 🔥 STATUS */}
-    <div style={{ fontSize: "12px", marginBottom: "10px", color: "green"
-    }}>
-      {h.status?.toUpperCase()}
-    </div>
+                    {/* ARABIC */}
+                    <p style={{
+                      fontSize: "22px",
+                      direction: "rtl",
+                      marginBottom: "10px"
+                    }}>
+                      {h.text_arabic || "Arabic not available"}
+                    </p>
 
-    {/* 🔥 ARABIC */}
-    <p style={{
-      fontSize: "22px",
-      direction: "rtl",
-      marginBottom: "10px", color: "#555"
-    }}>
-      {h.text_arabic || "Arabic not available"}
-    </p>
+                    {/* URDU */}
+                    <p>
+                      <b>اردو ترجمہ:</b> {h.text_urdu || "Urdu not available"}
+                    </p>
 
-    {/* 🔥 URDU */}
-    <p style={{ marginBottom: "10px" , color: "#555"}}>
-    <span style={{ fontSize: "20px", fontWeight: "bold" }}>اردو ترجمہ :</span>{h.text_urdu || "Urdu not available"}
-    </p>
+                    {/* ENGLISH */}
+                    <p>
+                      {h.text_english || "English not available"}
+                    </p>
 
-    {/* 🔥 ENGLISH */}
-    <p style={{ color: "#444" }}>
-      {h.text_english || "English not available"}
-    </p>
+                  </div>
+                ))
+              ) : (
+                <p>No Hadith Found</p>
+              )}
 
-  </div>
-))}
               {/* 🔥 PAGINATION */}
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: "20px"
+              }}>
                 <button
                   disabled={!prevPage}
                   onClick={() => fetchHadiths(selectedBook, page - 1)}
@@ -567,6 +592,7 @@ const openBook = (id) => {
     </div>
   );
 }
+ 
 // ─── PROPHETS PAGE ────────────────────────────────────────────
 function ProphetsPage({ theme }) {
   const [selected, setSelected] = useState(null);
