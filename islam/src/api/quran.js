@@ -2,7 +2,7 @@ import axios from "axios";
 
 // ✅ Base API
 const API = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/",
+  baseURL: "http://https://islam-for-all-production.up.railway.app/api/surahs/",
 });
 
 // ==========================

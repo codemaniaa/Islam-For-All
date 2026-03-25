@@ -309,7 +309,7 @@ function QuranPage() {
 
   // Fetch Surahs
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/surahs/")
+    fetch("http://https://islam-for-all-production.up.railway.app/api/surahs/surahs/")
       .then(res => res.json())
       .then(data => setSurahs(data))
       .catch(err => console.error(err));
@@ -320,7 +320,7 @@ function QuranPage() {
   console.log("Opening Surah:", id);
   setLoading(true);
 
-  fetch(`http://127.0.0.1:8000/api/ayahs/${id}/`)
+  fetch(`http://https://islam-for-all-production.up.railway.app/api/surahs/ayahs/${id}/`)
     .then(res => res.json())
     .then(data => {
       setAyahs(data);
@@ -401,7 +401,7 @@ function HadithPage({ theme }) {
 
   // ✅ Fetch Books
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/hadith/books/")
+    fetch("http://https://islam-for-all-production.up.railway.app/api/surahs/hadith/books/")
       .then(res => res.json())
       .then(data => setBooks(data))
       .catch(err => console.error(err));
@@ -411,7 +411,7 @@ const fetchHadiths = (bookId, pageNum = 1) => {
   setLoading(true);
   setPage(pageNum); // ✅ important
 
-  let url = `http://127.0.0.1:8000/api/hadith/?book=${bookId}&page=${pageNum}`;
+  let url = `http://https://islam-for-all-production.up.railway.app/api/surahs/hadith/?book=${bookId}&page=${pageNum}`;
 
   if (search) {
     url += `&search=${search}`;
