@@ -1,8 +1,8 @@
 import axios from "axios";
 
-// ✅ Base API
+// ✅ Base API (FIXED)
 const API = axios.create({
-  baseURL: "https://islam-for-all-production.up.railway.app/api/surahs/",
+  baseURL: "https://islam-for-all-production.up.railway.app/api/",
 });
 
 // ==========================

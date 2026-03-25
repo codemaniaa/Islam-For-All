@@ -401,7 +401,7 @@ function HadithPage({ theme }) {
 
   // ✅ Fetch Books
   useEffect(() => {
-    fetch("https://islam-for-all-production.up.railway.app/api/surahs/hadith/books/")
+    fetch("https://islam-for-all-production.up.railway.app/api/hadith/books/")
       .then(res => res.json())
       .then(data => setBooks(data))
       .catch(err => console.error(err));
@@ -411,7 +411,7 @@ const fetchHadiths = (bookId, pageNum = 1) => {
   setLoading(true);
   setPage(pageNum); // ✅ important
 
-  let url = `https://islam-for-all-production.up.railway.app/api/surahs/hadith/?book=${bookId}&page=${pageNum}`;
+  let url = `https://islam-for-all-production.up.railway.app/api/hadith/?book=${bookId}&page=${pageNum}`;
 
   if (search) {
     url += `&search=${search}`;
