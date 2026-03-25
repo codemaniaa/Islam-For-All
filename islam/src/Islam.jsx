@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"; 
 import { getSurahs, getAyahs } from "./api/quran";
 // ─── API CONFIG ───────────────────────────────────────────────
-const API_BASE = "http://127.0.0.1:8000/api";
+const API_BASE = "127.0.0.1:8000/api";
 const apiFetch = (path) => fetch(`${API_BASE}${path}`).then(r => r.json());
 import React from "react";
 
@@ -98,7 +98,7 @@ const NAV_ITEMS = [
 function GeometricBg({ theme }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
-      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.04 }}>
+      <svg width="100%" height="100%" xmlns="www.w3.org/2000/svg" style={{ opacity: 0.04 }}>
         <defs>
           <pattern id="islamic-pattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
             <polygon points="40,2 78,20 78,60 40,78 2,60 2,20" fill="none" stroke={theme.accent} strokeWidth="0.8"/>
@@ -309,7 +309,7 @@ function QuranPage() {
 
   // Fetch Surahs
   useEffect(() => {
-    fetch("http://https://islam-for-all-production.up.railway.app/api/surahs/surahs/")
+    fetch("https://islam-for-all-production.up.railway.app/api/surahs/surahs/")
       .then(res => res.json())
       .then(data => setSurahs(data))
       .catch(err => console.error(err));
@@ -320,7 +320,7 @@ function QuranPage() {
   console.log("Opening Surah:", id);
   setLoading(true);
 
-  fetch(`http://https://islam-for-all-production.up.railway.app/api/surahs/ayahs/${id}/`)
+  fetch(`https://islam-for-all-production.up.railway.app/api/surahs/ayahs/${id}/`)
     .then(res => res.json())
     .then(data => {
       setAyahs(data);
@@ -401,7 +401,7 @@ function HadithPage({ theme }) {
 
   // ✅ Fetch Books
   useEffect(() => {
-    fetch("http://https://islam-for-all-production.up.railway.app/api/surahs/hadith/books/")
+    fetch("https://islam-for-all-production.up.railway.app/api/surahs/hadith/books/")
       .then(res => res.json())
       .then(data => setBooks(data))
       .catch(err => console.error(err));
@@ -411,7 +411,7 @@ const fetchHadiths = (bookId, pageNum = 1) => {
   setLoading(true);
   setPage(pageNum); // ✅ important
 
-  let url = `http://https://islam-for-all-production.up.railway.app/api/surahs/hadith/?book=${bookId}&page=${pageNum}`;
+  let url = `https://islam-for-all-production.up.railway.app/api/surahs/hadith/?book=${bookId}&page=${pageNum}`;
 
   if (search) {
     url += `&search=${search}`;
@@ -916,7 +916,7 @@ function AIScholarPage({ theme }) {
       setMessages(prev => [...prev, { role: "assistant", content: data.response || data.error || "Jazakallahu Khayran for your question." }]);
       if (data.conversation_id) setConvId(data.conversation_id);
     } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Wa Alaykum Salam! I'm unable to connect to the backend right now. Please ensure your Django server is running at http://127.0.0.1:8000 and your ANTHROPIC_API_KEY is set in .env" }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "Wa Alaykum Salam! I'm unable to connect to the backend right now. Please ensure your Django server is running at 127.0.0.1:8000 and your ANTHROPIC_API_KEY is set in .env" }]);
     }
     setLoading(false);
   };

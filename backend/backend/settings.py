@@ -49,6 +49,9 @@ MIDDLEWARE = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+CORS_ALLOWED_ORIGINS = [
+    "https://islam-for-all.vercel.app/",
+]
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [

@@ -2,7 +2,7 @@ import axios from "axios";
 
 // ✅ Base API
 const API = axios.create({
-  baseURL: "http://https://islam-for-all-production.up.railway.app/api/surahs/",
+  baseURL: "https://islam-for-all-production.up.railway.app/api/surahs/",
 });
 
 // ==========================
