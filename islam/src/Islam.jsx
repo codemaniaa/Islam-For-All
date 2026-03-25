@@ -309,29 +309,27 @@ function QuranPage() {
 
   // Fetch Surahs
   useEffect(() => {
-    fetch("https://islam-for-all-production.up.railway.app/api/surahs/surahs/")
-      .then(res => res.json())
+    getSurahs()
       .then(data => setSurahs(data))
       .catch(err => console.error(err));
   }, []);
 
-  // Fetch Ayahs
- const openSurah = (id) => {
-  console.log("Opening Surah:", id);
-  setLoading(true);
+  // ✅ Fetch Ayahs (FIXED)
+  const openSurah = (id) => {
+    console.log("Opening Surah:", id);
+    setLoading(true);
 
-  fetch(`https://islam-for-all-production.up.railway.app/api/surahs/ayahs/${id}/`)
-    .then(res => res.json())
-    .then(data => {
-      setAyahs(data);
-      setSelectedSurah(id);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error(err);
-      setLoading(false);
-    });
-};
+    getAyahs(id)
+      .then(data => {
+        setAyahs(data);
+        setSelectedSurah(id);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  };
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
@@ -399,30 +397,19 @@ function HadithPage({ theme }) {
 
   const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch Books
-  useEffect(() => {
-    fetch("https://islam-for-all-production.up.railway.app/api/hadith/books/")
-      .then(res => res.json())
-      .then(data => setBooks(data))
-      .catch(err => console.error(err));
-  }, []);
- 
+// ✅ Fetch Books
+useEffect(() => {
+  getBooks()
+    .then(data => setBooks(data))
+    .catch(err => console.error(err));
+}, []);
+
+// ✅ Fetch Hadiths
 const fetchHadiths = (bookId, pageNum = 1) => {
   setLoading(true);
-  setPage(pageNum); // ✅ important
+  setPage(pageNum);
 
-  let url = `https://islam-for-all-production.up.railway.app/api/hadith/?book=${bookId}&page=${pageNum}`;
-
-  if (search) {
-    url += `&search=${search}`;
-  }
-
-  if (status) {
-    url += `&status=${status}`;
-  }
-
-  fetch(url)
-    .then(res => res.json())
+  getHadiths(bookId, pageNum, search, status)
     .then(data => {
       console.log("HADITH RESPONSE:", data);
 
@@ -433,16 +420,16 @@ const fetchHadiths = (bookId, pageNum = 1) => {
       setLoading(false);
     })
     .catch(err => {
-      console.error("ERROR:", err);
+      console.error(err);
       setLoading(false);
     });
 };
 
-  // ✅ When book selected
-  const openBook = (id) => {
-    setSelectedBook(id);
-    fetchHadiths(id, 1);
-  };
+// ✅ When book selected
+const openBook = (id) => {
+  setSelectedBook(id);
+  fetchHadiths(id, 1);
+};
 
   return (
     <div style={{ padding: "20px" }}>

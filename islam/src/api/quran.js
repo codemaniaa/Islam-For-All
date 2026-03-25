@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// ✅ Base API (FIXED)
+// ✅ Base API
 const API = axios.create({
   baseURL: "https://islam-for-all-production.up.railway.app/api/",
 });
@@ -9,35 +9,55 @@ const API = axios.create({
 // 📖 QURAN APIs
 // ==========================
 
-// 🔹 Get all Surahs
 export const getSurahs = async () => {
   try {
     const res = await API.get("surahs/");
     return res.data;
   } catch (error) {
-    console.error("Error fetching surahs:", error);
+    console.error(error);
     return [];
   }
 };
 
-// 🔹 Get single Surah
-export const getSurahDetail = async (id) => {
+export const getAyahs = async (id) => {
   try {
-    const res = await API.get(`surah/${id}/`);
+    const res = await API.get(`ayahs/${id}/`);
     return res.data;
   } catch (error) {
-    console.error("Error fetching surah detail:", error);
-    return null;
+    console.error(error);
+    return [];
   }
 };
 
-// 🔹 Get Ayahs of a Surah
-export const getAyahs = async (surah_id) => {
+// ==========================
+// 📚 HADITH APIs (NEW)
+// ==========================
+
+// 🔹 Get Books
+export const getBooks = async () => {
   try {
-    const res = await API.get(`ayahs/${surah_id}/`);
+    const res = await API.get("hadith/books/");
     return res.data;
   } catch (error) {
-    console.error("Error fetching ayahs:", error);
+    console.error(error);
     return [];
+  }
+};
+
+// 🔹 Get Hadiths
+export const getHadiths = async (bookId, page = 1, search = "", status = "") => {
+  try {
+    const res = await API.get("hadith/", {
+      params: {
+        book: bookId,
+        page: page,
+        search: search || undefined,
+        status: status || undefined,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    return { results: [] };
   }
 };
