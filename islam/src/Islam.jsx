@@ -585,6 +585,7 @@ function HadithPage({ theme }) {
                               fontSize: "clamp(20px,4vw,26px)", direction: "rtl", lineHeight: 2.2,
                               fontFamily: "'Scheherazade New','Traditional Arabic','Arial Unicode MS',serif",
                               background: "linear-gradient(135deg,#f9f6f0,#fdf8f0)",
+                              color: "black",
                               border: "1px solid #e8dfc8", borderRadius: "12px",
                               padding: "16px", marginBottom: "16px", textAlign: "right",
                             }}>
