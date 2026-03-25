@@ -299,26 +299,652 @@ function HomePage({ setPage, theme }) {
     </div>
   );
 }
+ 
 
-// ─── QURAN PAGE ───────────────────────────────────────────────
+// ============================================================
+// HADITH PAGE — Islam360-inspired UI
+// ============================================================
+
+const STATUS_CONFIG = {
+  sahih:   { label: "Sahih",   bg: "#e6f4ea", color: "#1e7e34", border: "#a8d5b5" },
+  hasan:   { label: "Hasan",   bg: "#fff8e1", color: "#b8860b", border: "#f0d080" },
+  daif:    { label: "Da'if",   bg: "#fdecea", color: "#c0392b", border: "#f5b7b1" },
+  default: { label: "",        bg: "#f0f0f0", color: "#555",    border: "#ccc"    },
+};
+
+function getStatusConfig(status = "") {
+  const key = status.toLowerCase();
+  return STATUS_CONFIG[key] || STATUS_CONFIG.default;
+}
+
+function HadithPage({ theme }) {
+  const [books, setBooks] = React.useState([]);
+  const [hadiths, setHadiths] = React.useState([]);
+  const [selectedBook, setSelectedBook] = React.useState(null);
+  const [search, setSearch] = React.useState("");
+  const [status, setStatus] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const [nextPage, setNextPage] = React.useState(null);
+  const [prevPage, setPrevPage] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const sliderRef = React.useRef(null);
+
+  React.useEffect(() => {
+    getBooks()
+      .then(data => setBooks(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  const fetchHadiths = (bookId, pageNum = 1) => {
+    setLoading(true);
+    setPage(pageNum);
+    setHadiths([]);
+    setCurrentIndex(0);
+
+    getHadiths(bookId, pageNum, search, status)
+      .then(data => {
+        const hadithData = data.results ? data.results : data;
+        setHadiths(hadithData || []);
+        setNextPage(data.next || null);
+        setPrevPage(data.previous || null);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("HADITH ERROR:", err);
+        setLoading(false);
+      });
+  };
+
+  const openBook = (id) => {
+    setSelectedBook(id);
+    setTimeout(() => fetchHadiths(id, 1), 100);
+  };
+
+  const goNext = () => {
+    if (currentIndex < hadiths.length - 1) {
+      setCurrentIndex(i => i + 1);
+    } else if (nextPage) {
+      fetchHadiths(selectedBook, page + 1);
+    }
+  };
+
+  const goPrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(i => i - 1);
+    } else if (prevPage) {
+      fetchHadiths(selectedBook, page - 1);
+    }
+  };
+
+  React.useEffect(() => {
+    if (sliderRef.current) {
+      sliderRef.current.style.transform = `translateX(-${currentIndex * 100}%)`;
+    }
+  }, [currentIndex]);
+
+  const currentHadith = hadiths[currentIndex];
+
+  const styles = {
+    page: {
+      minHeight: "100vh",
+      background: "linear-gradient(160deg, #f9f6f0 0%, #eef7f2 100%)",
+      fontFamily: "'Georgia', 'Times New Roman', serif",
+      color: "#1a1a1a",
+    },
+    header: {
+      background: "linear-gradient(135deg, #1a5c3a 0%, #0d3d26 100%)",
+      color: "#fff",
+      padding: "20px 24px",
+      display: "flex",
+      alignItems: "center",
+      gap: "12px",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+      position: "sticky",
+      top: 0,
+      zIndex: 100,
+    },
+    headerTitle: {
+      fontSize: "clamp(18px, 4vw, 24px)",
+      fontWeight: "700",
+      letterSpacing: "0.5px",
+      margin: 0,
+      fontFamily: "'Georgia', serif",
+    },
+    headerSub: {
+      fontSize: "12px",
+      opacity: 0.75,
+      margin: 0,
+      letterSpacing: "1px",
+      textTransform: "uppercase",
+    },
+    backBtn: {
+      background: "rgba(255,255,255,0.15)",
+      border: "1px solid rgba(255,255,255,0.3)",
+      color: "#fff",
+      borderRadius: "8px",
+      padding: "8px 16px",
+      cursor: "pointer",
+      fontSize: "14px",
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      transition: "background 0.2s",
+      marginLeft: "auto",
+      fontFamily: "inherit",
+    },
+    bookGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+      gap: "16px",
+      padding: "24px",
+      maxWidth: "1200px",
+      margin: "0 auto",
+    },
+    bookCard: {
+      background: "#fff",
+      border: "1px solid #e0ead8",
+      borderRadius: "16px",
+      padding: "20px",
+      cursor: "pointer",
+      transition: "all 0.25s ease",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+      display: "flex",
+      flexDirection: "column",
+      gap: "8px",
+      position: "relative",
+      overflow: "hidden",
+    },
+    bookIcon: {
+      fontSize: "28px",
+      marginBottom: "4px",
+    },
+    bookName: {
+      fontSize: "16px",
+      fontWeight: "700",
+      color: "#1a5c3a",
+      margin: 0,
+      lineHeight: 1.3,
+    },
+    bookSub: {
+      fontSize: "12px",
+      color: "#888",
+      margin: 0,
+    },
+    bookAccent: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "4px",
+      height: "100%",
+      background: "linear-gradient(180deg, #1a5c3a, #4caf50)",
+      borderRadius: "16px 0 0 16px",
+    },
+    filterBar: {
+      display: "flex",
+      gap: "10px",
+      flexWrap: "wrap",
+      padding: "16px 20px",
+      background: "#fff",
+      borderBottom: "1px solid #e8f0e8",
+      alignItems: "center",
+    },
+    searchInput: {
+      flex: 1,
+      minWidth: "180px",
+      padding: "10px 14px",
+      border: "1.5px solid #c8e0c8",
+      borderRadius: "10px",
+      fontSize: "14px",
+      outline: "none",
+      fontFamily: "inherit",
+      background: "#f7fbf7",
+      color: "#1a1a1a",
+    },
+    select: {
+      padding: "10px 14px",
+      border: "1.5px solid #c8e0c8",
+      borderRadius: "10px",
+      fontSize: "14px",
+      background: "#f7fbf7",
+      color: "#1a1a1a",
+      cursor: "pointer",
+      fontFamily: "inherit",
+    },
+    searchBtn: {
+      padding: "10px 20px",
+      background: "linear-gradient(135deg, #1a5c3a, #2e8b57)",
+      color: "#fff",
+      border: "none",
+      borderRadius: "10px",
+      cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: "600",
+      fontFamily: "inherit",
+    },
+    sliderWrapper: {
+      flex: 1,
+      overflow: "hidden",
+      position: "relative",
+    },
+    sliderTrack: {
+      display: "flex",
+      transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+      willChange: "transform",
+    },
+    slide: {
+      minWidth: "100%",
+      padding: "24px 20px",
+      boxSizing: "border-box",
+    },
+    hadithCard: {
+      background: "#fff",
+      borderRadius: "20px",
+      boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+      overflow: "hidden",
+      maxWidth: "780px",
+      margin: "0 auto",
+    },
+    hadithTopBar: {
+      background: "linear-gradient(135deg, #1a5c3a 0%, #145230 100%)",
+      padding: "16px 20px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      color: "#fff",
+    },
+    hadithBookName: {
+      fontSize: "13px",
+      opacity: 0.85,
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+    },
+    hadithNum: {
+      fontSize: "14px",
+      fontWeight: "700",
+      background: "rgba(255,255,255,0.2)",
+      padding: "4px 12px",
+      borderRadius: "20px",
+    },
+    chapterBadge: {
+      padding: "10px 20px",
+      background: "#f0f7f2",
+      borderLeft: "4px solid #1a5c3a",
+      margin: "0",
+      fontSize: "13px",
+      color: "#2e6b47",
+      fontWeight: "600",
+    },
+    hadithBody: {
+      padding: "20px",
+    },
+    arabicText: {
+      fontSize: "clamp(20px, 4vw, 26px)",
+      direction: "rtl",
+      lineHeight: "2.2",
+      color: "#1a1a1a",
+      fontFamily: "'Scheherazade New', 'Traditional Arabic', 'Arial Unicode MS', serif",
+      padding: "16px",
+      background: "linear-gradient(135deg, #f9f6f0, #fdf8f0)",
+      borderRadius: "12px",
+      border: "1px solid #e8dfc8",
+      marginBottom: "16px",
+      textAlign: "right",
+    },
+    divider: {
+      height: "1px",
+      background: "linear-gradient(90deg, transparent, #c8e0c8, transparent)",
+      margin: "16px 0",
+    },
+    urduText: {
+      fontSize: "clamp(15px, 3vw, 17px)",
+      direction: "rtl",
+      lineHeight: "2.0",
+      color: "#2d2d2d",
+      fontFamily: "'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Arial Unicode MS', serif",
+      marginBottom: "12px",
+      textAlign: "right",
+    },
+    urduLabel: {
+      fontSize: "11px",
+      color: "#888",
+      textTransform: "uppercase",
+      letterSpacing: "1px",
+      marginBottom: "4px",
+      textAlign: "right",
+    },
+    englishText: {
+      fontSize: "clamp(14px, 2.5vw, 15px)",
+      lineHeight: "1.8",
+      color: "#444",
+      fontFamily: "'Georgia', serif",
+    },
+    englishLabel: {
+      fontSize: "11px",
+      color: "#888",
+      textTransform: "uppercase",
+      letterSpacing: "1px",
+      marginBottom: "4px",
+    },
+    navBar: {
+      padding: "16px 20px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      background: "#fff",
+      borderTop: "1px solid #e8f0e8",
+      position: "sticky",
+      bottom: 0,
+      boxShadow: "0 -4px 20px rgba(0,0,0,0.06)",
+      gap: "12px",
+    },
+    navBtn: {
+      padding: "10px 20px",
+      borderRadius: "12px",
+      border: "2px solid #1a5c3a",
+      background: "#fff",
+      color: "#1a5c3a",
+      cursor: "pointer",
+      fontWeight: "700",
+      fontSize: "14px",
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      transition: "all 0.2s",
+      fontFamily: "inherit",
+    },
+    navBtnDisabled: {
+      opacity: 0.35,
+      cursor: "not-allowed",
+      pointerEvents: "none",
+    },
+    pageIndicator: {
+      textAlign: "center",
+      flex: 1,
+    },
+    pageNum: {
+      display: "inline-block",
+      background: "#f0f7f2",
+      color: "#1a5c3a",
+      padding: "6px 16px",
+      borderRadius: "20px",
+      fontWeight: "700",
+      fontSize: "13px",
+      border: "1px solid #c8e0c8",
+    },
+    counter: {
+      fontSize: "11px",
+      color: "#999",
+      marginTop: "4px",
+    },
+    loadingWrap: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "300px",
+      gap: "16px",
+      color: "#1a5c3a",
+    },
+    spinner: {
+      width: "40px",
+      height: "40px",
+      border: "3px solid #e0ead8",
+      borderTop: "3px solid #1a5c3a",
+      borderRadius: "50%",
+      animation: "spin 0.8s linear infinite",
+    },
+    emptyState: {
+      textAlign: "center",
+      padding: "60px 20px",
+      color: "#888",
+    },
+    sectionLabel: {
+      padding: "6px 12px",
+      background: "#e8f5e9",
+      borderRadius: "20px",
+      fontSize: "11px",
+      fontWeight: "700",
+      letterSpacing: "1px",
+      textTransform: "uppercase",
+      display: "inline-block",
+      marginBottom: "8px",
+    },
+  };
+
+  return (
+    <div style={styles.page}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .book-card:hover { transform: translateY(-4px) !important; box-shadow: 0 8px 28px rgba(26,92,58,0.15) !important; border-color: #1a5c3a !important; }
+        .nav-btn:hover:not([disabled]) { background: #1a5c3a !important; color: #fff !important; }
+        .search-btn:hover { opacity: 0.9; }
+        .back-btn:hover { background: rgba(255,255,255,0.25) !important; }
+        .hadith-card-anim { animation: fadeIn 0.4s ease; }
+      `}</style>
+
+      {/* HEADER */}
+      <div style={styles.header}>
+        <div>
+          <p style={styles.headerSub}>Islamic Library</p>
+          <h1 style={styles.headerTitle}>
+            {selectedBook ? "📖 Hadith Reader" : "📚 Hadith Collection"}
+          </h1>
+        </div>
+        {selectedBook && (
+          <button
+            className="back-btn"
+            style={styles.backBtn}
+            onClick={() => setSelectedBook(null)}
+          >
+            ← Books
+          </button>
+        )}
+      </div>
+
+      {/* BOOK LIST */}
+      {!selectedBook && (
+        <div style={styles.bookGrid}>
+          {books.map((book, idx) => (
+            <div
+              key={book.id}
+              className="book-card"
+              style={{ ...styles.bookCard, animationDelay: `${idx * 0.05}s` }}
+              onClick={() => openBook(book.id)}
+            >
+              <div style={styles.bookAccent} />
+              <div style={{ paddingLeft: "8px" }}>
+                <div style={styles.bookIcon}>📗</div>
+                <h3 style={styles.bookName}>{book.name}</h3>
+                <p style={styles.bookSub}>Tap to explore →</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* HADITH READER */}
+      {selectedBook && (
+        <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 70px)" }}>
+          {/* FILTER BAR */}
+          <div style={styles.filterBar}>
+            <input
+              type="text"
+              placeholder="🔍  Search hadith..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={styles.searchInput}
+              onKeyDown={e => e.key === "Enter" && fetchHadiths(selectedBook, 1)}
+            />
+            <select value={status} onChange={e => setStatus(e.target.value)} style={styles.select}>
+              <option value="">All Grades</option>
+              <option value="Sahih">✅ Sahih</option>
+              <option value="Hasan">🟡 Hasan</option>
+              <option value="Daif">🔴 Da'if</option>
+            </select>
+            <button className="search-btn" style={styles.searchBtn} onClick={() => fetchHadiths(selectedBook, 1)}>
+              Search
+            </button>
+          </div>
+
+          {/* CONTENT */}
+          {loading ? (
+            <div style={styles.loadingWrap}>
+              <div style={styles.spinner} />
+              <p style={{ fontSize: "14px", color: "#1a5c3a" }}>Loading Hadiths…</p>
+            </div>
+          ) : !Array.isArray(hadiths) || hadiths.length === 0 ? (
+            <div style={styles.emptyState}>
+              <div style={{ fontSize: "48px", marginBottom: "12px" }}>🔍</div>
+              <p>No Hadith Found</p>
+            </div>
+          ) : (
+            <>
+              {/* SLIDER */}
+              <div style={styles.sliderWrapper}>
+                <div style={styles.sliderTrack} ref={sliderRef}>
+                  {hadiths.map((h, idx) => {
+                    const sc = getStatusConfig(h.status);
+                    return (
+                      <div key={h.id} style={styles.slide}>
+                        <div style={styles.hadithCard} className="hadith-card-anim">
+                          {/* TOP BAR */}
+                          <div style={styles.hadithTopBar}>
+                            <span style={styles.hadithBookName}>
+                              📖 {h.book?.name || "Unknown Book"}
+                            </span>
+                            <span style={styles.hadithNum}>
+                              #{h.hadith_number}
+                            </span>
+                          </div>
+
+                          {/* CHAPTER */}
+                          {h.chapter && (
+                            <div style={styles.chapterBadge}>
+                              📚 Ch. {h.chapter.chapter_number || "-"} — {h.chapter.english || ""}
+                            </div>
+                          )}
+
+                          <div style={styles.hadithBody}>
+                            {/* STATUS BADGE */}
+                            {h.status && (
+                              <div style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                background: sc.bg,
+                                color: sc.color,
+                                border: `1px solid ${sc.border}`,
+                                borderRadius: "20px",
+                                padding: "4px 14px",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                letterSpacing: "0.5px",
+                                marginBottom: "16px",
+                                textTransform: "uppercase",
+                              }}>
+                                {sc.label}
+                              </div>
+                            )}
+
+                            {/* ARABIC */}
+                            <p style={styles.arabicText}>
+                              {h.text_arabic || "Arabic not available"}
+                            </p>
+
+                            <div style={styles.divider} />
+
+                            {/* URDU */}
+                            <div>
+                              <div style={styles.urduLabel}>اردو ترجمہ</div>
+                              <p style={styles.urduText}>
+                                {h.text_urdu || "Urdu not available"}
+                              </p>
+                            </div>
+
+                            <div style={styles.divider} />
+
+                            {/* ENGLISH */}
+                            <div>
+                              <div style={styles.englishLabel}>English Translation</div>
+                              <p style={styles.englishText}>
+                                {h.text_english || "English not available"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* NAV BAR */}
+              <div style={styles.navBar}>
+                <button
+                  className="nav-btn"
+                  style={{
+                    ...styles.navBtn,
+                    ...(!prevPage && currentIndex === 0 ? styles.navBtnDisabled : {}),
+                  }}
+                  onClick={goPrev}
+                  disabled={!prevPage && currentIndex === 0}
+                >
+                  ← Prev
+                </button>
+
+                <div style={styles.pageIndicator}>
+                  <div style={styles.pageNum}>
+                    {currentIndex + 1} / {hadiths.length}
+                  </div>
+                  <div style={styles.counter}>Page {page}</div>
+                </div>
+
+                <button
+                  className="nav-btn"
+                  style={{
+                    ...styles.navBtn,
+                    ...(!nextPage && currentIndex === hadiths.length - 1 ? styles.navBtnDisabled : {}),
+                  }}
+                  onClick={goNext}
+                  disabled={!nextPage && currentIndex === hadiths.length - 1}
+                >
+                  Next →
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ============================================================
+// QURAN PAGE — Islam360-inspired UI
+// ============================================================
 
 function QuranPage() {
-  const [surahs, setSurahs] = useState([]);
-  const [ayahs, setAyahs] = useState([]);
-  const [selectedSurah, setSelectedSurah] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [surahs, setSurahs] = React.useState([]);
+  const [ayahs, setAyahs] = React.useState([]);
+  const [selectedSurah, setSelectedSurah] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [currentSurahIndex, setCurrentSurahIndex] = React.useState(0);
 
-  // Fetch Surahs
-  useEffect(() => {
+  React.useEffect(() => {
     getSurahs()
       .then(data => setSurahs(data))
       .catch(err => console.error(err));
   }, []);
 
-  // ✅ Fetch Ayahs (FIXED)
   const openSurah = (id) => {
-    console.log("Opening Surah:", id);
     setLoading(true);
+    const idx = surahs.findIndex(s => s.id === id);
+    if (idx !== -1) setCurrentSurahIndex(idx);
 
     getAyahs(id)
       .then(data => {
@@ -332,266 +958,469 @@ function QuranPage() {
       });
   };
 
-  return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h1>📖 Quran App</h1>
-
-      {!selectedSurah && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px" }}>
-          {surahs.map(s => (
-            <div key={s.id} onClick={() => openSurah(s.id)} style={{   border: "1px solid #ccc",   padding: "15px",   borderRadius: "10px",   cursor: "pointer" }}  >
-              <p>Surah {s.id}</p>
-              <h3>{s.name}</h3>
-              <p>{s.transliteration}</p>
-              <small>{s.verses.length} Ayahs</small>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {selectedSurah && (
-        <div >
-          <div className="" style={{width: "60%", marginInline:"20$"}}>
-          <button onClick={() => setSelectedSurah(null)}>⬅ Back</button>
-
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-                  ayahs.map(a => (
-          <div key={a.id} style={{marginTop: "15px",borderBottom: "1px solid #ddd",paddingBottom: "10px" }}>
-            <p>{selectedSurah.id}</p>
-            {/* Ayah Number */}
-             
-            {/* Arabic Text */}
-          <p style={{ fontSize: "22px", direction: "rtl" }}>
-           {a.text}
-            </p>
-
-            {/* Translation */}
-            
-            <div className="flex items-center gap-2 mt-2 text-red-500">
-              <p>{a.translation}</p>
-                Ayah {a.id} 
-                 </div>
-          </div> 
-        ))
-          )}
-        </div>
-        </div>
-      )}
-      
-    
-</div>  );
-} 
-
-
-function HadithPage({ theme }) {
-  const [books, setBooks] = useState([]);
-  const [hadiths, setHadiths] = useState([]);
-  const [selectedBook, setSelectedBook] = useState(null);
-
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [page, setPage] = useState(1);
-
-  const [nextPage, setNextPage] = useState(null);
-  const [prevPage, setPrevPage] = useState(null);
-
-  const [loading, setLoading] = useState(false);
-
-  // ✅ Fetch Books
-  useEffect(() => {
-    getBooks()
-      .then(data => setBooks(data))
-      .catch(err => console.error(err));
-  }, []);
-
-  // ✅ Fetch Hadiths
-  const fetchHadiths = (bookId, pageNum = 1) => {
-    setLoading(true);
-    setPage(pageNum);
-    setHadiths([]); // ✅ prevent crash
-
-    getHadiths(bookId, pageNum, search, status)
-      .then(data => {
-        console.log("HADITH RESPONSE:", data);
-
-        const hadithData = data.results ? data.results : data;
-
-        setHadiths(hadithData || []);
-        setNextPage(data.next || null);
-        setPrevPage(data.previous || null);
-
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("HADITH ERROR:", err);
-        setLoading(false);
-      });
+  const goNextSurah = () => {
+    if (currentSurahIndex < surahs.length - 1) {
+      const next = surahs[currentSurahIndex + 1];
+      openSurah(next.id);
+    }
   };
 
-  // ✅ Open Book
-  const openBook = (id) => {
-    setSelectedBook(id);
-    setTimeout(() => fetchHadiths(id, 1), 100);
+  const goPrevSurah = () => {
+    if (currentSurahIndex > 0) {
+      const prev = surahs[currentSurahIndex - 1];
+      openSurah(prev.id);
+    }
+  };
+
+  const currentSurahData = surahs.find(s => s.id === selectedSurah);
+
+  const SURAH_TYPES = { Meccan: { bg: "#fff8e1", color: "#b8860b", border: "#f0d080" }, Medinan: { bg: "#e8f5e9", color: "#1e7e34", border: "#a8d5b5" } };
+
+  const qStyles = {
+    page: {
+      minHeight: "100vh",
+      background: "linear-gradient(160deg, #f9f6f0 0%, #edf5f0 100%)",
+      fontFamily: "'Georgia', 'Times New Roman', serif",
+    },
+    header: {
+      background: "linear-gradient(135deg, #1a3a6b 0%, #0d2447 100%)",
+      color: "#fff",
+      padding: "20px 24px",
+      display: "flex",
+      alignItems: "center",
+      gap: "16px",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+      position: "sticky",
+      top: 0,
+      zIndex: 100,
+    },
+    headerTitle: {
+      fontSize: "clamp(18px, 4vw, 24px)",
+      fontWeight: "700",
+      margin: 0,
+      fontFamily: "'Georgia', serif",
+    },
+    headerSub: {
+      fontSize: "12px",
+      opacity: 0.75,
+      margin: 0,
+      letterSpacing: "1px",
+      textTransform: "uppercase",
+    },
+    headerRight: {
+      marginLeft: "auto",
+      display: "flex",
+      gap: "8px",
+    },
+    headerBtn: {
+      background: "rgba(255,255,255,0.15)",
+      border: "1px solid rgba(255,255,255,0.3)",
+      color: "#fff",
+      borderRadius: "8px",
+      padding: "8px 14px",
+      cursor: "pointer",
+      fontSize: "13px",
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      fontFamily: "inherit",
+      transition: "background 0.2s",
+    },
+    headerBtnDisabled: {
+      opacity: 0.35,
+      cursor: "not-allowed",
+      pointerEvents: "none",
+    },
+    surahGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+      gap: "14px",
+      padding: "24px",
+      maxWidth: "1200px",
+      margin: "0 auto",
+    },
+    surahCard: {
+      background: "#fff",
+      border: "1px solid #dde8f5",
+      borderRadius: "16px",
+      padding: "18px 16px",
+      cursor: "pointer",
+      transition: "all 0.25s ease",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+      display: "flex",
+      gap: "14px",
+      alignItems: "flex-start",
+      position: "relative",
+      overflow: "hidden",
+    },
+    surahNumBox: {
+      width: "42px",
+      height: "42px",
+      background: "linear-gradient(135deg, #1a3a6b, #2557a7)",
+      color: "#fff",
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: "800",
+      fontSize: "13px",
+      flexShrink: 0,
+    },
+    surahInfo: {
+      flex: 1,
+      minWidth: 0,
+    },
+    surahName: {
+      fontSize: "17px",
+      fontWeight: "700",
+      color: "#1a3a6b",
+      margin: "0 0 2px 0",
+      direction: "rtl",
+      fontFamily: "'Scheherazade New', 'Traditional Arabic', serif",
+    },
+    surahTranslit: {
+      fontSize: "13px",
+      fontWeight: "600",
+      color: "#333",
+      margin: "0 0 4px 0",
+    },
+    surahMeta: {
+      fontSize: "11px",
+      color: "#999",
+    },
+    readerWrap: {
+      maxWidth: "820px",
+      margin: "0 auto",
+      padding: "0 16px 100px",
+    },
+    surahHeader: {
+      textAlign: "center",
+      padding: "32px 20px 24px",
+      background: "linear-gradient(160deg, #1a3a6b 0%, #0d2447 100%)",
+      color: "#fff",
+      margin: "0 -16px 0",
+    },
+    bismillah: {
+      fontSize: "clamp(22px, 5vw, 32px)",
+      fontFamily: "'Scheherazade New', 'Traditional Arabic', serif",
+      letterSpacing: "1px",
+      marginBottom: "12px",
+    },
+    surahTitle: {
+      fontSize: "clamp(20px, 5vw, 28px)",
+      fontWeight: "800",
+      fontFamily: "'Scheherazade New', 'Traditional Arabic', serif",
+      marginBottom: "6px",
+    },
+    surahTitleEn: {
+      fontSize: "16px",
+      opacity: 0.8,
+      fontFamily: "Georgia, serif",
+    },
+    surahStats: {
+      display: "flex",
+      justifyContent: "center",
+      gap: "20px",
+      marginTop: "12px",
+      fontSize: "12px",
+      opacity: 0.75,
+    },
+    ayahWrap: {
+      marginTop: "16px",
+    },
+    ayahCard: {
+      background: "#fff",
+      borderRadius: "16px",
+      padding: "20px",
+      marginBottom: "14px",
+      boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+      border: "1px solid #e8eef8",
+      animation: "fadeIn 0.3s ease",
+    },
+    ayahTopBar: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: "14px",
+    },
+    ayahBadge: {
+      width: "36px",
+      height: "36px",
+      background: "linear-gradient(135deg, #1a3a6b, #2557a7)",
+      color: "#fff",
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: "800",
+      fontSize: "13px",
+    },
+    arabicAyah: {
+      fontSize: "clamp(22px, 4.5vw, 28px)",
+      direction: "rtl",
+      lineHeight: "2.4",
+      color: "#1a1a1a",
+      fontFamily: "'Scheherazade New', 'Traditional Arabic', 'Arial Unicode MS', serif",
+      textAlign: "right",
+      background: "linear-gradient(135deg, #f9f6f0, #fdf8ee)",
+      padding: "16px",
+      borderRadius: "10px",
+      border: "1px solid #e8dfc8",
+      marginBottom: "14px",
+    },
+    translationText: {
+      fontSize: "clamp(13px, 2.5vw, 15px)",
+      lineHeight: "1.8",
+      color: "#444",
+      fontFamily: "'Georgia', serif",
+      paddingTop: "4px",
+    },
+    translationLabel: {
+      fontSize: "10px",
+      textTransform: "uppercase",
+      letterSpacing: "1px",
+      color: "#aaa",
+      marginBottom: "4px",
+    },
+    divider: {
+      height: "1px",
+      background: "linear-gradient(90deg, transparent, #dde8f5, transparent)",
+      margin: "12px 0",
+    },
+    bottomNav: {
+      position: "fixed",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      background: "#fff",
+      borderTop: "1px solid #dde8f5",
+      padding: "12px 20px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+      zIndex: 50,
+    },
+    navBtn: {
+      padding: "10px 20px",
+      borderRadius: "10px",
+      border: "2px solid #1a3a6b",
+      background: "#fff",
+      color: "#1a3a6b",
+      cursor: "pointer",
+      fontWeight: "700",
+      fontSize: "13px",
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      transition: "all 0.2s",
+      fontFamily: "inherit",
+    },
+    surahIndicator: {
+      textAlign: "center",
+      flex: 1,
+    },
+    surahPill: {
+      display: "inline-block",
+      background: "#eef3fc",
+      color: "#1a3a6b",
+      padding: "6px 16px",
+      borderRadius: "20px",
+      fontWeight: "700",
+      fontSize: "12px",
+      border: "1px solid #c0d0f0",
+    },
+    loadingWrap: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "300px",
+      gap: "16px",
+    },
+    spinner: {
+      width: "40px",
+      height: "40px",
+      border: "3px solid #dde8f5",
+      borderTop: "3px solid #1a3a6b",
+      borderRadius: "50%",
+      animation: "spin 0.8s linear infinite",
+    },
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>📜 Hadith Library</h1>
+    <div style={qStyles.page}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .surah-card:hover { transform: translateY(-3px) !important; box-shadow: 0 8px 24px rgba(26,58,107,0.14) !important; border-color: #1a3a6b !important; }
+        .q-nav-btn:hover:not([disabled]) { background: #1a3a6b !important; color: #fff !important; }
+        .q-header-btn:hover { background: rgba(255,255,255,0.25) !important; }
+      `}</style>
 
-      {/* 🔹 BOOK LIST */}
-      {!selectedBook && (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))",
-          gap: "10px"
-        }}>
-          {books.map(book => (
-            <div key={book.id}
-              onClick={() => openBook(book.id)}
+      {/* HEADER */}
+      <div style={qStyles.header}>
+        <div>
+          <p style={qStyles.headerSub}>Islamic Library</p>
+          <h1 style={qStyles.headerTitle}>
+            {selectedSurah ? `Surah ${currentSurahData?.transliteration || ""}` : "📖 The Holy Quran"}
+          </h1>
+        </div>
+
+        {selectedSurah && (
+          <div style={qStyles.headerRight}>
+            <button
+              className="q-header-btn"
               style={{
-                border: "1px solid #ccc",
-                padding: "15px",
-                borderRadius: "10px",
-                cursor: "pointer"
-              }}>
-              <h3>{book.name}</h3>
-              <p>Open Hadith</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 🔹 HADITH SECTION */}
-      {selectedBook && (
-        <div style={{ maxWidth: "800px", margin: "auto" }}>
-
-          <button onClick={() => setSelectedBook(null)}>⬅ Back</button>
-
-          {/* 🔍 FILTER */}
-          <div style={{ display: "flex", gap: "10px", margin: "15px 0" }}>
-            <input
-              type="text"
-              placeholder="Search Hadith..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ flex: 1, padding: "10px" }}
-            />
-
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">All</option>
-              <option value="Sahih">Sahih</option>
-              <option value="Hasan">Hasan</option>
-              <option value="Daif">Daif</option>
-            </select>
-
-            <button onClick={() => fetchHadiths(selectedBook, 1)}>
-              Search
+                ...qStyles.headerBtn,
+                ...(currentSurahIndex === 0 ? qStyles.headerBtnDisabled : {}),
+              }}
+              onClick={goPrevSurah}
+              disabled={currentSurahIndex === 0}
+            >
+              ← Prev Surah
+            </button>
+            <button
+              className="q-header-btn"
+              style={{
+                ...qStyles.headerBtn,
+                ...(currentSurahIndex === surahs.length - 1 ? qStyles.headerBtnDisabled : {}),
+              }}
+              onClick={goNextSurah}
+              disabled={currentSurahIndex === surahs.length - 1}
+            >
+              Next Surah →
+            </button>
+            <button
+              className="q-header-btn"
+              style={qStyles.headerBtn}
+              onClick={() => setSelectedSurah(null)}
+            >
+              ☰ All Surahs
             </button>
           </div>
+        )}
+      </div>
 
-          {/* 🔄 LOADING */}
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <>
-              {/* 📜 HADITH LIST */}
-              {Array.isArray(hadiths) && hadiths.length > 0 ? (
-                hadiths.map(h => (
-                  <div key={h.id}
-                    style={{
-                      marginBottom: "25px",
-                      padding: "15px",
-                      borderBottom: "1px solid #ddd",
-                      background: "#fafafa",
-                      borderRadius: "10px"
-                    }}>
-
-                    {/* TOP BAR */}
-                    <div style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: "13px",
-                      marginBottom: "10px",
-                      color: "#555"
-                    }}>
-                      <span>📖 {h.book?.name || "Unknown Book"}</span>
-                      <span>Hadith #{h.hadith_number}</span>
-                    </div>
-
-                    {/* CHAPTER */}
-                    <div style={{
-                      marginBottom: "10px",
-                      fontWeight: "bold",
-                      color: "#555"
-                    }}>
-                      📚 Chapter {h.chapter?.chapter_number || "-"} - {h.chapter?.english || ""}
-                    </div>
-
-                    {/* STATUS */}
-                    <div style={{
-                      fontSize: "12px",
-                      marginBottom: "10px",
-                      color: "green"
-                    }}>
-                      {h.status?.toUpperCase() || ""}
-                    </div>
-
-                    {/* ARABIC */}
-                    <p style={{
-                      fontSize: "22px",
-                      direction: "rtl",
-                      marginBottom: "10px"
-                    }}>
-                      {h.text_arabic || "Arabic not available"}
-                    </p>
-
-                    {/* URDU */}
-                    <p>
-                      <b>اردو ترجمہ:</b> {h.text_urdu || "Urdu not available"}
-                    </p>
-
-                    {/* ENGLISH */}
-                    <p>
-                      {h.text_english || "English not available"}
-                    </p>
-
+      {/* SURAH GRID */}
+      {!selectedSurah && (
+        <div style={qStyles.surahGrid}>
+          {surahs.map((s, idx) => {
+            const type = SURAH_TYPES[s.type] || SURAH_TYPES["Meccan"];
+            return (
+              <div
+                key={s.id}
+                className="surah-card"
+                style={qStyles.surahCard}
+                onClick={() => openSurah(s.id)}
+              >
+                <div style={qStyles.surahNumBox}>{s.id}</div>
+                <div style={qStyles.surahInfo}>
+                  <h3 style={qStyles.surahName}>{s.name}</h3>
+                  <p style={qStyles.surahTranslit}>{s.transliteration}</p>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                    <span style={qStyles.surahMeta}>{s.verses?.length || "–"} Ayahs</span>
+                    {s.type && (
+                      <span style={{
+                        fontSize: "10px",
+                        fontWeight: "700",
+                        background: type.bg,
+                        color: type.color,
+                        border: `1px solid ${type.border}`,
+                        borderRadius: "10px",
+                        padding: "2px 8px",
+                      }}>
+                        {s.type}
+                      </span>
+                    )}
                   </div>
-                ))
-              ) : (
-                <p>No Hadith Found</p>
-              )}
-
-              {/* 🔥 PAGINATION */}
-              <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "20px"
-              }}>
-                <button
-                  disabled={!prevPage}
-                  onClick={() => fetchHadiths(selectedBook, page - 1)}
-                >
-                  ⬅ Previous
-                </button>
-
-                <span>Page {page}</span>
-
-                <button
-                  disabled={!nextPage}
-                  onClick={() => fetchHadiths(selectedBook, page + 1)}
-                >
-                  Next ➡
-                </button>
+                </div>
               </div>
-            </>
+            );
+          })}
+        </div>
+      )}
+
+      {/* AYAH READER */}
+      {selectedSurah && (
+        <div style={qStyles.readerWrap}>
+          {/* SURAH HEADER BANNER */}
+          <div style={qStyles.surahHeader}>
+            {selectedSurah !== 1 && selectedSurah !== 9 && (
+              <div style={qStyles.bismillah}>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+            )}
+            <div style={qStyles.surahTitle}>{currentSurahData?.name}</div>
+            <div style={qStyles.surahTitleEn}>{currentSurahData?.transliteration}</div>
+            <div style={qStyles.surahStats}>
+              <span>📍 Surah {selectedSurah}</span>
+              <span>•</span>
+              <span>{ayahs.length} Ayahs</span>
+              {currentSurahData?.type && <><span>•</span><span>{currentSurahData.type}</span></>}
+            </div>
+          </div>
+
+          {loading ? (
+            <div style={qStyles.loadingWrap}>
+              <div style={qStyles.spinner} />
+              <p style={{ color: "#1a3a6b", fontSize: "14px" }}>Loading Surah…</p>
+            </div>
+          ) : (
+            <div style={qStyles.ayahWrap}>
+              {ayahs.map((a, idx) => (
+                <div key={a.id} style={qStyles.ayahCard}>
+                  <div style={qStyles.ayahTopBar}>
+                    <div style={qStyles.ayahBadge}>{idx + 1}</div>
+                  </div>
+
+                  <p style={qStyles.arabicAyah}>{a.text}</p>
+
+                  <div style={qStyles.divider} />
+
+                  <div style={qStyles.translationLabel}>Translation</div>
+                  <p style={qStyles.translationText}>{a.translation}</p>
+                </div>
+              ))}
+            </div>
           )}
+
+          {/* BOTTOM NAV */}
+          <div style={qStyles.bottomNav}>
+            <button
+              className="q-nav-btn"
+              style={{
+                ...qStyles.navBtn,
+                ...(currentSurahIndex === 0 ? { opacity: 0.3, cursor: "not-allowed", pointerEvents: "none" } : {}),
+              }}
+              onClick={goPrevSurah}
+              disabled={currentSurahIndex === 0}
+            >
+              ← Previous Surah
+            </button>
+            <div style={qStyles.surahIndicator}>
+              <div style={qStyles.surahPill}>
+                {currentSurahIndex + 1} / {surahs.length}
+              </div>
+            </div>
+            <button
+              className="q-nav-btn"
+              style={{
+                ...qStyles.navBtn,
+                ...(currentSurahIndex === surahs.length - 1 ? { opacity: 0.3, cursor: "not-allowed", pointerEvents: "none" } : {}),
+              }}
+              onClick={goNextSurah}
+              disabled={currentSurahIndex === surahs.length - 1}
+            >
+              Next Surah →
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
+
+
  
 // ─── PROPHETS PAGE ────────────────────────────────────────────
 function ProphetsPage({ theme }) {
