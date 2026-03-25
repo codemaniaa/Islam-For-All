@@ -918,6 +918,7 @@ function QuranPage({ theme }) {
                     fontFamily: "'Scheherazade New','Traditional Arabic','Arial Unicode MS',serif",
                     textAlign: "right",
                     background: "linear-gradient(135deg,#f9f6f0,#fdf8ee)",
+                    color: "black",
                     padding: "14px", borderRadius: "10px", border: "1px solid #e8dfc8",
                   }}>{a.text}</p>
 
